@@ -1,0 +1,9 @@
+name = Resource booking
+description = Build a booking system for resources.
+core = 7.x
+
+dependencies[] = entity
+dependencies[] = views
+
+files[] = includes/booking.controller.inc
+files[] = includes/resource.controller.inc
