@@ -291,7 +291,7 @@ function resource_booking_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/resource.admin.inc',
   );
-  
+
   //Adds a ajax callback that toggles the booking
   $items['booking/%/%/toggle'] = array(
       'page callback' => 'booking_toggle',
@@ -302,7 +302,7 @@ function resource_booking_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'includes/booking.ajax.inc',
   );
-  
+
 
   return $items;
 }
@@ -420,65 +420,45 @@ function resource_booking_permission() {
  */
 function resource_booking_entity_property_info_alter(&$info) {
   $properties = &$info['booking']['properties'];
-  
-  $properties['created'] = array(
-      'label' => t('Date created'),
-      'type' => 'date',
-      'description' => t('The date the node was posted.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
-  );
   $properties['date'] = array(
-      'label' => t('Date of booking'),
-      'type' => 'int',
-      'description' => t('The date of the booking.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
-  );
-  $properties['starthour'] = array(
-      'label' => t('Start hour'),
-      'type' => 'int',
-      'description' => t('The hour the booking starts.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
+    'label' => t('Date of booking'),
+    'type' => 'varchar',
+    'description' => t('The date of the booking.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'date',
   );
   $properties['booked'] = array(
-      'label' => t('Booked?'),
-      'type' => 'int',
-      'description' => t('Is the unit booked? 1 = yes 0 =no.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
+    'label' => t('Booked?'),
+    'type' => 'int',
+    'description' => t('Is the unit booked? 1 = yes 0 =no.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'booked',
   );
   $properties['bookable'] = array(
-      'label' => t('Bookable?'),
-      'type' => 'int',
-      'description' => t('Is the unit bookable? 1 = yes 0 =no.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
+    'label' => t('Bookable?'),
+    'type' => 'int',
+    'description' => t('Is the unit bookable? 1 = yes 0 =no.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'bookable',
   );
   $properties['resouce'] = array(
-      'label' => t('Resource'),
-      'type' => 'int',
-      'description' => t('The resource entity that the unit is connected to.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
+    'label' => t('Resource'),
+    'type' => 'int',
+    'description' => t('The resource entity that the unit is connected to.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'resouce',
   );
-  
-  
-  
-  $properties['created'] = array(
-      'label' => t('Date created'),
-      'type' => 'date',
-      'description' => t('The date the node was posted.'),
-      'setter callback' => 'entity_property_verbatim_set',
-      'setter permission' => 'administer booking types',
-      'schema field' => 'created',
+  $properties['starthour'] = array(
+    'label' => t('Start hour'),
+    'type' => 'int',
+    'description' => t('The hour the booking starts.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'starthour',
   );
   $properties['created'] = array(
     'label' => t('Date created'),
