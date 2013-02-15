@@ -12,6 +12,11 @@ class BookingController extends EntityAPIController {
     $values += array(
       'title' => '',
       'description' => '',
+      'date' => '',
+      'booked' => '',
+      'bookable' => '',
+      'resource' => '',
+      'starthour' => '',
       'created' => REQUEST_TIME,
       'changed' => REQUEST_TIME,
       'uid' => $user->uid,
@@ -41,7 +46,7 @@ class BookingController extends EntityAPIController {
       0 => array('#markup' => check_plain($entity->description))
     );
 
-    // Make Description themed like default fields.
+    // Make Date themed like default fields.
     $content['date'] = array(
         '#theme' => 'field',
         '#weight' => 0,
@@ -58,9 +63,7 @@ class BookingController extends EntityAPIController {
         '#formatter' => 'text_default',
         0 => array('#markup' => check_plain($entity->date))
     );
-    
-    
-    
+
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
 }
