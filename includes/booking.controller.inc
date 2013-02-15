@@ -41,6 +41,26 @@ class BookingController extends EntityAPIController {
       0 => array('#markup' => check_plain($entity->description))
     );
 
+    // Make Description themed like default fields.
+    $content['date'] = array(
+        '#theme' => 'field',
+        '#weight' => 0,
+        '#title' => t('Date'),
+        '#access' => TRUE,
+        '#label_display' => 'above',
+        '#view_mode' => 'full',
+        '#language' => LANGUAGE_NONE,
+        '#field_name' => 'field_fake_description',
+        '#field_type' => 'text',
+        '#entity_type' => 'booking',
+        '#bundle' => $entity->type,
+        '#items' => array(array('value' => $entity->date)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => check_plain($entity->date))
+    );
+    
+    
+    
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
 }

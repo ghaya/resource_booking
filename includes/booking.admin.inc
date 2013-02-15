@@ -150,6 +150,15 @@ function booking_form($form, &$form_state, $booking) {
     '#default_value' => $booking->description,
   );
 
+  
+  $form['date'] = array(
+     '#type' => 'textfield',
+      '#title' => t('1=booked 0 =notbooked'),
+      '#value' => $booking->date,
+  );
+  
+  
+  
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $booking->uid,

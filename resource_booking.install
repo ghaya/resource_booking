@@ -15,44 +15,82 @@ function resource_booking_schema() {
     'description' => 'The base table for resource bookings.',
     'fields' => array(
       'bid' => array(
-        'description' => 'The primary identifier for the booking.',
+        'description' => 'The primary identifier for the resource booking.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'type' => array(
-        'description' => 'The type (bundle) of this booking.',
+        'description' => 'The type (bundle) of this resource booking.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'title' => array(
-        'description' => 'The title of the booking.',
+        'description' => 'The title of the resource booking.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
+        
+      'date' => array(
+            'description' => 'The date of the booking in the format yyyymmdd.',
+            'type' => 'varchar',
+            'length' => 255,
+            'not null' => TRUE,
+            'default' => '',
+       ),
+
+       'booked' => array(
+            'description' => 'If the booking unit is booked 1 is true.',
+            'type' => 'int',
+            'not null' => TRUE,
+            'default' => '0',
+       ),
+       
+        'bookable' => array(
+            'description' => 'If the booking unit is bookable 1 is true',
+            'type' => 'int',
+            'not null' => TRUE,
+            'default' => '0',
+        ),
+        
+        'resource' => array(
+            'description' => 'A reference to the resource connected to the booking',
+            'type' => 'int',
+            'not null' => TRUE,
+            'default' => '0',
+        ),
+        'starthour' => array(
+            'description' => 'The start hour for the booking',
+            'type' => 'int',
+            'not null' => TRUE,
+            'default' => '0',
+        ),
+        
+        
+        
       'uid' => array(
         'description' => 'ID of Drupal user creator.',
         'type' => 'int',
         'not null' => TRUE,
       ),
       'created' => array(
-        'description' => 'The Unix timestamp when the booking was created.',
+        'description' => 'The Unix timestamp when the resource booking was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'changed' => array(
-        'description' => 'The Unix timestamp when the booking was most recently saved.',
+        'description' => 'The Unix timestamp when the resource booking was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'description' => array(
-        'description' => 'booking description.',
+        'description' => 'resource booking description.',
         'type' => 'text',
       ),
     ),
@@ -60,12 +98,12 @@ function resource_booking_schema() {
   );
 
   $schema['booking_type'] = array(
-    'description' => 'Stores information about all defined booking types.',
+    'description' => 'Stores information about all defined resource booking types.',
     'fields' => array(
       'btid' => array(
         'type' => 'serial',
         'not null' => TRUE,
-        'description' => 'Primary Key: Unique booking type ID.',
+        'description' => 'Primary Key: Unique resource booking type ID.',
       ),
       'type' => array(
         'description' => 'The machine-readable name of this type.',
@@ -95,23 +133,23 @@ function resource_booking_schema() {
   );
 
   $schema['resource'] = array(
-    'description' => 'The base table for resource.',
+    'description' => 'The base table for resource booking items.',
     'fields' => array(
       'rid' => array(
-        'description' => 'The primary identifier for the resource.',
+        'description' => 'The primary identifier for the resource booking item.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'type' => array(
-        'description' => 'The type (bundle) of this resource.',
+        'description' => 'The type (bundle) of this resource booking item.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'title' => array(
-        'description' => 'The title of the resource.',
+        'description' => 'The title of the resource booking item.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -123,19 +161,19 @@ function resource_booking_schema() {
         'not null' => TRUE,
       ),
       'created' => array(
-        'description' => 'The Unix timestamp when the resource was created.',
+        'description' => 'The Unix timestamp when the resource booking item was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'changed' => array(
-        'description' => 'The Unix timestamp when the resource was most recently saved.',
+        'description' => 'The Unix timestamp when the resource booking item was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'description' => array(
-        'description' => 'resource description.',
+        'description' => 'resource booking item description.',
         'type' => 'text',
       ),
     ),
@@ -143,12 +181,12 @@ function resource_booking_schema() {
   );
 
   $schema['resource_type'] = array(
-    'description' => 'Stores information about all defined resource types.',
+    'description' => 'Stores information about all defined resource booking item types.',
     'fields' => array(
       'rtid' => array(
         'type' => 'serial',
         'not null' => TRUE,
-        'description' => 'Primary Key: Unique resource type ID.',
+        'description' => 'Primary Key: Unique resource booking item type ID.',
       ),
       'type' => array(
         'description' => 'The machine-readable name of this type.',
