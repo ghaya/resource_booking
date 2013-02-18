@@ -478,7 +478,7 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['uid'] = array(
     'label' => t('Author'),
-    'type' => 'text',
+    'type' => 'user',
     'description' => t('The author of the booking.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
