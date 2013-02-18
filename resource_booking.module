@@ -418,11 +418,13 @@ function resource_booking_permission() {
 /**
  * Implements hook_entity_property_info_alter().
  */
+
+// property types are here http://drupal.org/node/905580
 function resource_booking_entity_property_info_alter(&$info) {
   $properties = &$info['booking']['properties'];
   $properties['date'] = array(
     'label' => t('Date of booking'),
-    'type' => 'varchar',
+    'type' => 'text',
     'description' => t('The date of the booking.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
@@ -430,7 +432,7 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['booked'] = array(
     'label' => t('Booked?'),
-    'type' => 'int',
+    'type' => 'integer',
     'description' => t('Is the unit booked? 1 = yes 0 =no.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
@@ -438,7 +440,7 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['bookable'] = array(
     'label' => t('Bookable?'),
-    'type' => 'int',
+    'type' => 'integer',
     'description' => t('Is the unit bookable? 1 = yes 0 =no.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
@@ -446,7 +448,7 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['resouce'] = array(
     'label' => t('Resource'),
-    'type' => 'int',
+    'type' => 'integer',
     'description' => t('The resource entity that the unit is connected to.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
@@ -454,7 +456,7 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['starthour'] = array(
     'label' => t('Start hour'),
-    'type' => 'int',
+    'type' => 'integer',
     'description' => t('The hour the booking starts.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
@@ -476,12 +478,21 @@ function resource_booking_entity_property_info_alter(&$info) {
   );
   $properties['uid'] = array(
     'label' => t('Author'),
-    'type' => 'user',
+    'type' => 'text',
     'description' => t('The author of the booking.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
     'required' => TRUE,
     'schema field' => 'uid',
+  );
+  $properties['title'] = array(
+    'label' => t('Title'),
+    'type' => 'text',
+    'description' => t('The title of the booking.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'required' => TRUE,
+    'schema field' => 'title',
   );
 
   $properties2 = &$info['resource']['properties'];
