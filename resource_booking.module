@@ -241,7 +241,7 @@ function resource_booking_menu() {
     );
   }
 
-  $resource_uri = 'resource/%booking';
+  $resource_uri = 'resource/%resource';
   $resource_uri_argument_position = 1;
 
   $items[$resource_uri] = array(
@@ -294,13 +294,12 @@ function resource_booking_menu() {
 
   //Adds a ajax callback that toggles the booking
   $items['booking/%/%/toggle'] = array(
-      'page callback' => 'booking_toggle',
-      'page arguments' => array(1,2),
-      'access callback' => 'node_access',
-      'access arguments' => array('administer booking types'),
-      'delivery callback' => 'ajax_deliver',
-      'type' => MENU_CALLBACK,
-      'file' => 'includes/booking.ajax.inc',
+    'page callback' => 'booking_toggle',
+    'page arguments' => array(1,2),
+    'access arguments' => array('administer booking types'),    
+    'delivery callback' => 'ajax_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/booking.ajax.inc',
   );
 
 
@@ -523,7 +522,7 @@ function resource_booking_entity_property_info_alter(&$info) {
 
 /*******************************************************************************
  ********************************* Booking API's *******************************
- ******************************************************************************/
+******************************************************************************/
 
 /**
  * Access callback for booking.
@@ -537,14 +536,14 @@ function booking_access($op, $booking, $account = NULL, $entity_type = NULL) {
   switch ($op) {
     case 'create':
       return user_access('administer booking types', $account)
-          || user_access('create booking entities', $account);
+      || user_access('create booking entities', $account);
     case 'view':
       return user_access('administer booking types', $account)
-          || user_access('view booking entities', $account);
+      || user_access('view booking entities', $account);
     case 'edit':
       return user_access('administer booking types')
-          || user_access('edit any booking entities')
-          || (user_access('edit own booking entities') && ($booking->uid == $account->uid));
+      || user_access('edit any booking entities')
+      || (user_access('edit own booking entities') && ($booking->uid == $account->uid));
   }
 }
 
@@ -587,7 +586,7 @@ function booking_delete_multiple($booking_ids) {
 
 /*******************************************************************************
  ****************************** Booking type API's *****************************
- ******************************************************************************/
+******************************************************************************/
 
 /**
  * Access callback for booking type.
@@ -634,7 +633,7 @@ function booking_type_delete_multiple($booking_type_ids) {
 
 /*******************************************************************************
  ********************************* Resource API's ******************************
- ******************************************************************************/
+******************************************************************************/
 
 /**
  * Access callback for resource.
@@ -648,14 +647,14 @@ function resource_access($op, $resource, $account = NULL, $entity_type = NULL) {
   switch ($op) {
     case 'create':
       return user_access('administer resource types', $account)
-          || user_access('create resource entities', $account);
+      || user_access('create resource entities', $account);
     case 'view':
       return user_access('administer resource types', $account)
-          || user_access('view resource entities', $account);
+      || user_access('view resource entities', $account);
     case 'edit':
       return user_access('administer resource types')
-          || user_access('edit any resource entities')
-          || (user_access('edit own resource entities') && ($resource->uid == $account->uid));
+      || user_access('edit any resource entities')
+      || (user_access('edit own resource entities') && ($resource->uid == $account->uid));
   }
 }
 
@@ -698,7 +697,7 @@ function resource_delete_multiple($resource_ids) {
 
 /*******************************************************************************
  ****************************** Resource type API's ****************************
- ******************************************************************************/
+******************************************************************************/
 
 /**
  * Access callback for resource type.
