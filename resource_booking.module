@@ -293,9 +293,9 @@ function resource_booking_menu() {
   );
 
   //Adds a ajax callback that toggles the booking
-  $items['booking/%/%/toggle'] = array(
+  $items['booking/%/%/%/toggle'] = array(
     'page callback' => 'booking_toggle',
-    'page arguments' => array(1,2),
+    'page arguments' => array(1,2,3),
     'access arguments' => array('administer booking types'),    
     'delivery callback' => 'ajax_deliver',
     'type' => MENU_CALLBACK,
@@ -451,7 +451,7 @@ function resource_booking_entity_property_info_alter(&$info) {
     'description' => t('The resource entity that the unit is connected to.'),
     'setter callback' => 'entity_property_verbatim_set',
     'setter permission' => 'administer booking types',
-    'schema field' => 'resouce',
+    'schema field' => 'resource',
   );
   $properties['starthour'] = array(
     'label' => t('Start hour'),
