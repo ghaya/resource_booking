@@ -445,7 +445,7 @@ function resource_booking_entity_property_info_alter(&$info) {
     'setter permission' => 'administer booking types',
     'schema field' => 'bookable',
   );
-  $properties['resouce'] = array(
+  $properties['resource'] = array(
     'label' => t('Resource'),
     'type' => 'integer',
     'description' => t('The resource entity that the unit is connected to.'),
@@ -518,6 +518,7 @@ function resource_booking_entity_property_info_alter(&$info) {
     'required' => TRUE,
     'schema field' => 'uid',
   );
+
 }
 
 /*******************************************************************************
