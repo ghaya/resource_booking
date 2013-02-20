@@ -14,6 +14,23 @@ function booking_toggle($bid, $booked, $title, $mode = NULL) {
   if ($mode != 'ajax') {
     drupal_goto('node/1');
   }
+  
+  //If user not logged in - error
+  if (!user_is_logged_in()) {
+    $message="Whoops - You have to be logged in to book.";
+    // Send the AJAX commands to the calling page.
+    $commands = array();
+    $commands[] = ajax_command_alert($message);
+    
+    // NOTE: this API changed after the recording of the video
+    // "ajax_commands" is now "ajax" for the #type property
+    // and the "#ajax_commands"" property should now be "#commands"
+    return array(
+      '#type' => 'ajax',
+      '#commands' => $commands,
+    );
+    
+  }
 
   //What does the user want to do? Set booking request based on argument sent with link
   if ($booked==1) {
@@ -47,12 +64,12 @@ function booking_toggle($bid, $booked, $title, $mode = NULL) {
       $message="OK you $request_text it";
     
       $commands = array();
-      $commands[] = ajax_command_alert($message);
+//      $commands[] = ajax_command_alert($message);
       // Replace the old toggle link with a new one
       $id="#".$title;
       $url_reconstruct="'/booking/".$bid."/".$booking_request."/".$title."/toggle/nojs'";
       
-      $commands[] = ajax_command_replace($id, "<a class='use-ajax' id=$id href=$url_reconstruct>$request_text</a>");
+      $commands[] = ajax_command_replace($id, "<a class='use-ajax' id=$title href=$url_reconstruct>$request_text</a>");
       return array(
         '#type' => 'ajax',
         '#commands' => $commands,
