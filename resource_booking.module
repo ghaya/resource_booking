@@ -296,7 +296,7 @@ function resource_booking_menu() {
   $items['booking/%/%/%/toggle'] = array(
     'page callback' => 'booking_toggle',
     'page arguments' => array(1,2,3),
-    'access arguments' => array('administer booking types'),    
+    'access arguments' => array('administer booking types'),
     'delivery callback' => 'ajax_deliver',
     'type' => MENU_CALLBACK,
     'file' => 'includes/booking.ajax.inc',
@@ -743,3 +743,137 @@ function resource_type_delete_multiple($resource_type_ids) {
   entity_delete_multiple('resource_type', $resource_type_ids);
 }
 
+
+/**
+ * Implements hook_views_pre_render().
+ */
+
+function resource_booking_views_pre_render(&$view) {
+  //This function sets the views grid columns equal to number of arguments (hours) sent
+  //Also creates a link to navigate to the next hours
+
+  dsm($view);
+  if ($view->name == 'bookings_2') {
+    if($view->args) {
+      $new_args=explode(" ",$view->args[0]); //Create an array with number of hours
+      $number_of_hours=count($new_args);
+      $view->style_plugin->options['columns']=$number_of_hours;
+      $next_hour=end($new_args)+1;
+      $next_args="";//Jsut to get rid of a php error about using an undeclared variable
+
+      for ($i = 1; $i <= $number_of_hours; $i++) {
+        if ($next_hour<22){
+          $next_args.=$next_hour;
+          if ($i != $number_of_hours && $next_hour != 21){
+            $next_args.="+";
+          }
+          $next_hour++;
+        }
+      }
+       
+      $view->header["area_text_custom"]->options["content"]="<a href='/bookings-2/".$next_args."'>Navigate to next view</a> ";
+    }
+  }
+}
+
+
+/**
+ * * Implements hook_rules_action_info()
+ *
+ */
+
+function resource_booking_rules_action_info() {
+  return array(
+    'create_booking_units_week' => array(
+      'group' => t('Bookings'),
+      'label' => t('Create booking unites'),
+    ),
+  );
+}
+
+function create_booking_units_week() {
+  /****
+   *Create one week of booking units
+  *Either a week from the booking unit that has the most advanced date
+  *Or a week from today i no booking units yet exist
+  */
+
+
+  /*
+   * Determine the start and end dates
+  */
+  //Retrieve the existing bookings
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'booking');
+  $result = $query->execute();
+
+  if (!isset($result['booking'])) {
+    //If no bookings exist set today as startday
+    $startdate_timestamp = time(); //timestamp
+    $startdate_string=date('Ymd',$startdate_timestamp); //(todays date in format yyyymmdd)
+  } else {
+    //Else retrieve booking with most advanced date to use as startdate
+    $ids = array_keys($result['booking']);
+    $last_booking_id=array();
+    $last_booking_id[]=end($ids); //This captures the last booking unit made.  IF booking units are made with this module, the last made will be most advanced date
+    $last_booking = entity_load('booking',($last_booking_id));
+    $startdate_string=$last_booking["$last_booking_id[0]"]->date;
+    $startdate_timestamp=strtotime($startdate_string);
+  }
+  //Set enddate to 1 week from startdate
+  $enddate_timestamp = strtotime("+7 day", $startdate_timestamp);
+  $enddate_string=date('Ymd', $enddate_timestamp);
+
+
+  /*
+   * Determine the default max opening and closing hours
+  */
+  $opening_hour=9;
+  $closing_hour=21;
+
+
+  /*
+   * Retrieve the resource entities
+  */
+
+  //Get the id numbers for all rooms and put them into the array
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'resource')
+  ->entityCondition('bundle', 'group_room')
+  ->addMetaData('account', user_load(1)); // Run the query as user 1.
+
+  $result = $query->execute();
+  if (isset($result['resource'])) {
+    $ids = array_keys($result['resource']);
+  }
+
+
+  /*
+   * Run a loop which goes through the days and creates
+  * Booking units for each of the resources
+  */
+  print_r($ids);
+  print $startdate_string." ";
+  print $startdate_timestamp." ";
+  print $enddate_string." ";
+  print $enddate_timestamp;
+  foreach ($ids as $room_id) {//Loops through each room id
+    for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){ //Loops through each date in the date range
+      $loop_date=date("Ymd",$i); //A string version of the date for use in the loop starts with the beginning date and goes forward 1 day at a time
+
+      for ($h = $opening_hour; $h <= $closing_hour; $h++) {  //loops through every hour and creates a booking unit
+        $e = entity_create('booking' , array('type' => 'booking'));
+        $ew = entity_metadata_wrapper('booking',$e);
+        $ew->title->set($loop_date."_".$h."_".$room_id);//Not sure what the title should be yet
+
+        $ew->resource->set("$room_id");
+        $ew->date->set($loop_date);
+
+        $ew->starthour->set($h);
+
+        $ew->save();
+      }
+    }
+  }
+}
