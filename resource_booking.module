@@ -744,6 +744,10 @@ function resource_type_delete_multiple($resource_type_ids) {
 }
 
 
+/*******************************************************************************
+ ****************************** Views related hooks ****************************
+******************************************************************************/
+
 /**
  * Implements hook_views_pre_render().
  */
@@ -776,6 +780,10 @@ function resource_booking_views_pre_render(&$view) {
   }
 }
 
+/*******************************************************************************
+ ****************************** Rules related hooks ****************************
+******************************************************************************/
+
 
 /**
  * * Implements hook_rules_action_info()
@@ -786,18 +794,43 @@ function resource_booking_rules_action_info() {
   return array(
     'create_booking_units_week' => array(
       'group' => t('Bookings'),
-      'label' => t('Create booking unites'),
+      'label' => t('Create 1 week of booking units'),
+      'parameter' => array (
+        'type' => array(
+          'type' => 'text',
+          'label' => t('Resource type'),
+          'options list' => 'rules_resource_type_list',
+          'description' => t('Choose all resources or select a resource type'),
+          'restriction' => 'input',
+
+        )
+
+      )
     ),
-  );
+    'delete_booking_units_week' => array(
+      'group' => t('Bookings'),
+      'label' => t('Delete 1 week ofbooking units'),
+      'parameter' => array (
+        'type' => array(
+          'type' => 'text',
+          'label' => t('Resource type'),
+          'options list' => 'rules_resource_type_list',
+          'description' => t('Choose all resources or select a resource type'),
+          'restriction' => 'input',
+
+        )
+      ),
+    );
 }
 
-function create_booking_units_week() {
-  /****
-   *Create one week of booking units
-  *Either a week from the booking unit that has the most advanced date
-  *Or a week from today i no booking units yet exist
-  */
 
+
+/****
+ *A rules action that creates one week of booking units
+*Either a week from the booking unit that has the most advanced date
+*Or a week from today i no booking units yet exist
+*/
+function create_booking_units_week($type) {
 
   /*
    * Determine the start and end dates
@@ -817,11 +850,13 @@ function create_booking_units_week() {
     $last_booking_id=array();
     $last_booking_id[]=end($ids); //This captures the last booking unit made.  IF booking units are made with this module, the last made will be most advanced date
     $last_booking = entity_load('booking',($last_booking_id));
-    $startdate_string=$last_booking["$last_booking_id[0]"]->date;
-    $startdate_timestamp=strtotime($startdate_string);
+    $lastdate_string=$last_booking["$last_booking_id[0]"]->date;//Get date of last booking  in string format
+    $lastdate_timestamp=strtotime($lastdate_string); //Convert lastdate to timestamp
+    $startdate_timestamp=strtotime("+1 day",$lastdate_timestamp); //Set startdate to 1 day after the date of last booking
+    $startdate_string=date('Ymd', $startdate_timestamp);
   }
   //Set enddate to 1 week from startdate
-  $enddate_timestamp = strtotime("+7 day", $startdate_timestamp);
+  $enddate_timestamp = strtotime("+6 day", $startdate_timestamp);
   $enddate_string=date('Ymd', $enddate_timestamp);
 
 
@@ -837,27 +872,32 @@ function create_booking_units_week() {
   */
 
   //Get the id numbers for all rooms and put them into the array
-  $query = new EntityFieldQuery();
+  if ($type != "all_resources") {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'resource')
+    ->entityCondition('bundle', $type)
+    ->addMetaData('account', user_load(1)); // Run the query as user 1.
+    $result = $query->execute();
+    if (isset($result['resource'])) {
+      $ids = array_keys($result['resource']);
+    }
+  } else {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'resource')
+    ->addMetaData('account', user_load(1)); // Run the query as user 1.
+    $result = $query->execute();
+    if (isset($result['resource'])) {
+      $ids = array_keys($result['resource']);
+    }
 
-  $query->entityCondition('entity_type', 'resource')
-  ->entityCondition('bundle', 'group_room')
-  ->addMetaData('account', user_load(1)); // Run the query as user 1.
 
-  $result = $query->execute();
-  if (isset($result['resource'])) {
-    $ids = array_keys($result['resource']);
   }
-
 
   /*
    * Run a loop which goes through the days and creates
   * Booking units for each of the resources
   */
-  print_r($ids);
-  print $startdate_string." ";
-  print $startdate_timestamp." ";
-  print $enddate_string." ";
-  print $enddate_timestamp;
+
   foreach ($ids as $room_id) {//Loops through each room id
     for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){ //Loops through each date in the date range
       $loop_date=date("Ymd",$i); //A string version of the date for use in the loop starts with the beginning date and goes forward 1 day at a time
@@ -877,3 +917,29 @@ function create_booking_units_week() {
     }
   }
 }
+
+function delete_booking_units_week($type) {
+  /****
+   *A rules action that deletes one week of booking units
+  *the week is the one with the oldest date
+  */
+  //Get the relevant resources
+  
+  
+  
+  
+  
+}  
+
+  //function to create list of options for rules action
+
+  function rules_resource_type_list(){
+    $types=array();
+    $types=resource_type_get_types();
+    $resource_types = array_keys($types);
+    array_unshift($resource_types,"all_resources"); //Add an alternative for all resources
+    $new_array=array_combine($resource_types,$resource_types);
+
+
+    return $new_array;
+  }
