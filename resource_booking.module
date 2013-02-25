@@ -909,8 +909,7 @@ function create_booking_units_week($type) {
       }
     }
   }
-  dsm("$startdate_string");
-  dsm("$enddate_string");
+ 
 }
 
 
@@ -1014,9 +1013,8 @@ function delete_booking_units_week($type) {
       
       }
     }
-  } //End if statement
-  dsm("$startdate_string");
-  dsm("$enddate_string");
+  } 
+  
   
 }
 
