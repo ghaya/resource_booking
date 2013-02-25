@@ -912,6 +912,10 @@ function create_booking_units_week($type) {
  
 }
 
+/****
+ *A rules action that delete a week of bookings
+ *The week from the earliest bookings
+ */
 
 function delete_booking_units_week($type) {
   /****
