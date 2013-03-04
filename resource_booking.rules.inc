@@ -54,7 +54,6 @@ function resource_booking_rules_action_info() {
 *Or a week from today i no booking units yet exist
 */
 function create_booking_units_date($type, $start_date, $end_date) {
-
   //Convert start dates and end dates to timestamps
   $start_date_timestamp=strtotime($start_date);
   $end_date_timestamp=strtotime($end_date);
