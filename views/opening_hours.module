@@ -1,0 +1,1031 @@
+<?php
+
+/**
+ * Implements hook_views_api().
+ */
+function resource_booking_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'resource_booking') . '/views',
+  );
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function resource_booking_entity_info() {
+  $entities = array();
+
+  $entities['booking'] = array(
+    'label' => t('Booking'),
+    'entity class' => 'Booking',
+    'controller class' => 'BookingController',
+    'base table' => 'booking',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'bid',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'load hook' => 'booking_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'resource_booking',
+    'access callback' => 'booking_access',
+  );
+
+  $entities['booking_type'] = array(
+    'label' => t('Booking type'),
+    'entity class' => 'BookingType',
+    'controller class' => 'BookingTypeController',
+    'base table' => 'booking_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'booking',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'btid',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'module' => 'resource_booking',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/structure/booking-types',
+      'file' => 'includes/booking.admin.inc',
+      'controller class' => 'BookingTypeUIController',
+    ),
+    'access callback' => 'booking_type_access',
+  );
+
+  $entities['resource'] = array(
+    'label' => t('Resource'),
+    'entity class' => 'Resource',
+    'controller class' => 'ResourceController',
+    'base table' => 'resource',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'rid',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'load hook' => 'resource_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'resource_booking',
+    'access callback' => 'resource_access',
+  );
+
+  $entities['resource_type'] = array(
+    'label' => t('Resource type'),
+    'entity class' => 'ResourceType',
+    'controller class' => 'ResourceTypeController',
+    'base table' => 'resource_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'resource',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'rtid',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'module' => 'resource_booking',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/structure/resource-types',
+      'file' => 'includes/resource.admin.inc',
+      'controller class' => 'ResourceTypeUIController',
+    ),
+    'access callback' => 'resource_type_access',
+  );
+
+  return $entities;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function resource_booking_entity_info_alter(&$entity_info) {
+  foreach (booking_type_get_types() as $type => $info) {
+    $entity_info['booking']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/structure/booking-types/manage/%booking_type',
+        'real path' => 'admin/structure/booking-types/manage/' . $type,
+        'bundle argument' => 4,
+      ),
+    );
+  }
+
+  foreach (resource_type_get_types() as $type => $info) {
+    $entity_info['resource']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/structure/resource-types/manage/%resource_type',
+        'real path' => 'admin/structure/resource-types/manage/' . $type,
+        'bundle argument' => 4,
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function resource_booking_menu() {
+  $items = array();
+
+  // Booking
+  $items['booking/add'] = array(
+    'title' => 'Add booking',
+    'page callback' => 'booking_admin_add_page',
+    'access arguments' => array('administer booking types'),
+    'file' => 'includes/booking.admin.inc',
+  );
+
+  foreach (booking_type_get_types() as $type => $info) {
+    $items['booking/add/' . $type] = array(
+      'title' => 'Add booking',
+      'page callback' => 'booking_add',
+      'page arguments' => array(2),
+      'access callback' => 'entity_access',
+      'access arguments' => array('create', 'booking', $type),
+      'file' => 'includes/booking.admin.inc',
+    );
+  }
+
+  $booking_uri = 'booking/%booking';
+  $booking_uri_argument_position = 1;
+
+  $items[$booking_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('booking', $booking_uri_argument_position),
+    'page callback' => 'booking_view',
+    'page arguments' => array($booking_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 'booking', $booking_uri_argument_position),
+    'file' => 'includes/booking.pages.inc',
+  );
+
+  $items[$booking_uri . '/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items[$booking_uri . '/delete'] = array(
+    'title' => 'Delete booking',
+    'title callback' => 'booking_label',
+    'title arguments' => array($booking_uri_argument_position),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('booking_delete_form', $booking_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'booking', $booking_uri_argument_position),
+    'file' => 'includes/booking.admin.inc',
+  );
+
+  $items[$booking_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('booking_form', $booking_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'booking', $booking_uri_argument_position),
+    'file' => 'includes/booking.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  $items['admin/structure/booking-types/%booking_type/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('booking_type_form_delete_confirm', 4),
+    'access arguments' => array('administer booking types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/booking.admin.inc',
+  );
+
+  // Resource
+  $items['resource/add'] = array(
+    'title' => 'Add resource',
+    'page callback' => 'resource_admin_add_page',
+    'access arguments' => array('administer resource types'),
+    'file' => 'includes/resource.admin.inc',
+  );
+
+  foreach (resource_type_get_types() as $type => $info) {
+    $items['resource/add/' . $type] = array(
+      'title' => 'Add resource',
+      'page callback' => 'resource_add',
+      'page arguments' => array(2),
+      'access callback' => 'entity_access',
+      'access arguments' => array('create', 'resource', $type),
+      'file' => 'includes/resource.admin.inc',
+    );
+  }
+
+  $resource_uri = 'resource/%resource';
+  $resource_uri_argument_position = 1;
+
+  $items[$resource_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('resource', $resource_uri_argument_position),
+    'page callback' => 'resource_view',
+    'page arguments' => array($resource_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 'resource', $resource_uri_argument_position),
+    'file' => 'includes/resource.pages.inc',
+  );
+
+  $items[$resource_uri . '/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items[$resource_uri . '/delete'] = array(
+    'title' => 'Delete resource',
+    'title callback' => 'resource_label',
+    'title arguments' => array($resource_uri_argument_position),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('resource_delete_form', $resource_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'resource', $resource_uri_argument_position),
+    'file' => 'includes/resource.admin.inc',
+  );
+
+  $items[$resource_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('resource_form', $resource_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'resource', $resource_uri_argument_position),
+    'file' => 'includes/resource.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  $items['admin/structure/resource-types/%resource_type/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('resource_type_form_delete_confirm', 4),
+    'access arguments' => array('administer booking types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/resource.admin.inc',
+  );
+
+  //Adds a ajax callback that toggles the booking
+  $items['booking/%/%/%/toggle'] = array(
+    'page callback' => 'booking_toggle',
+    'page arguments' => array(1,2,3),
+    'access arguments' => array('administer booking types'),
+    'delivery callback' => 'ajax_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/booking.ajax.inc',
+  );
+
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function resource_booking_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  switch ($root_path) {
+    case 'booking':
+      // Add action link to 'booking/add' on 'booking' page.
+      $item = menu_get_item('booking/add');
+      if ($item['access']) {
+        $data['actions']['output'][] = array(
+          '#theme' => 'menu_local_action',
+          '#link' => $item,
+        );
+      }
+      break;
+    case 'resource':
+      // Add action link to 'resource/add' on 'resource' page.
+      $item = menu_get_item('resource/add');
+      if ($item['access']) {
+        $data['actions']['output'][] = array(
+          '#theme' => 'menu_local_action',
+          '#link' => $item,
+        );
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function resource_booking_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    $paths = array(
+      'booking/*/edit' => TRUE,
+      'booking/*/delete' => TRUE,
+      'booking/add' => TRUE,
+      'booking/add/*' => TRUE,
+      'resource/*/edit' => TRUE,
+      'resource/*/delete' => TRUE,
+      'resource/add' => TRUE,
+      'resource/add/*' => TRUE,
+    );
+    return $paths;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function resource_booking_permission() {
+  $permissions = array(
+    'administer booking types' => array(
+      'title' => t('Administer booking types'),
+      'description' => t('Allows users to configure booking types and their fields.'),
+      'restrict access' => TRUE,
+    ),
+    'create booking entities' => array(
+      'title' => t('Create bookings'),
+      'description' => t('Allows users to create bookings.'),
+      'restrict access' => TRUE,
+    ),
+    'view booking entities' => array(
+      'title' => t('View bookings'),
+      'description' => t('Allows users to view bookings.'),
+      'restrict access' => TRUE,
+    ),
+    'edit any booking entities' => array(
+      'title' => t('Edit any bookings'),
+      'description' => t('Allows users to edit any bookings.'),
+      'restrict access' => TRUE,
+    ),
+    'edit own booking entities' => array(
+      'title' => t('Edit own bookings'),
+      'description' => t('Allows users to edit own bookings.'),
+      'restrict access' => TRUE,
+    ),
+    'administer resource types' => array(
+      'title' => t('Administer resource types'),
+      'description' => t('Allows users to configure resource types and their fields.'),
+      'restrict access' => TRUE,
+    ),
+    'create resource entities' => array(
+      'title' => t('Create resources'),
+      'description' => t('Allows users to create resources.'),
+      'restrict access' => TRUE,
+    ),
+    'view resource entities' => array(
+      'title' => t('View resources'),
+      'description' => t('Allows users to view resources.'),
+      'restrict access' => TRUE,
+    ),
+    'edit any resource entities' => array(
+      'title' => t('Edit any resources'),
+      'description' => t('Allows users to edit any resources.'),
+      'restrict access' => TRUE,
+    ),
+    'edit own resource entities' => array(
+      'title' => t('Edit own resources'),
+      'description' => t('Allows users to edit own resources.'),
+      'restrict access' => TRUE,
+    ),
+  );
+
+  return $permissions;
+}
+
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+
+// property types are here http://drupal.org/node/905580
+function resource_booking_entity_property_info_alter(&$info) {
+  $properties = &$info['booking']['properties'];
+  $properties['date'] = array(
+    'label' => t('Date of booking'),
+    'type' => 'text',
+    'description' => t('The date of the booking.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'date',
+  );
+  $properties['booked'] = array(
+    'label' => t('Booked?'),
+    'type' => 'integer',
+    'description' => t('Is the unit booked? 1 = yes 0 =no.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'booked',
+  );
+  $properties['bookable'] = array(
+    'label' => t('Bookable?'),
+    'type' => 'integer',
+    'description' => t('Is the unit bookable? 1 = yes 0 =no.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'bookable',
+  );
+  $properties['resource'] = array(
+    'label' => t('Resource'),
+    'type' => 'integer',
+    'description' => t('The resource entity that the unit is connected to.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'resource',
+  );
+  $properties['starthour'] = array(
+    'label' => t('Start hour'),
+    'type' => 'integer',
+    'description' => t('The hour the booking starts.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'starthour',
+  );
+  $properties['created'] = array(
+    'label' => t('Date created'),
+    'type' => 'date',
+    'description' => t('The date the node was posted.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t('Date changed'),
+    'type' => 'date',
+    'description' => t('The date the booking was most recently updated.'),
+    'schema field' => 'changed',
+  );
+  $properties['uid'] = array(
+    'label' => t('Author'),
+    'type' => 'user',
+    'description' => t('The author of the booking.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
+  $properties['title'] = array(
+    'label' => t('Title'),
+    'type' => 'text',
+    'description' => t('The title of the booking.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer booking types',
+    'required' => TRUE,
+    'schema field' => 'title',
+  );
+
+  $properties2 = &$info['resource']['properties'];
+  $properties2['created'] = array(
+    'label' => t('Date created'),
+    'type' => 'date',
+    'description' => t('The date the node was posted.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer resource types',
+    'schema field' => 'created',
+  );
+  $properties2['changed'] = array(
+    'label' => t('Date changed'),
+    'type' => 'date',
+    'description' => t('The date the resource was most recently updated.'),
+    'schema field' => 'changed',
+  );
+  $properties2['uid'] = array(
+    'label' => t('Author'),
+    'type' => 'user',
+    'description' => t('The author of the resource.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer resource types',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
+
+}
+
+/*******************************************************************************
+ ********************************* Booking API's *******************************
+******************************************************************************/
+
+/**
+ * Access callback for booking.
+ */
+function booking_access($op, $booking, $account = NULL, $entity_type = NULL) {
+  global $user;
+
+  if (!isset($account)) {
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('administer booking types', $account)
+      || user_access('create booking entities', $account);
+    case 'view':
+      return user_access('administer booking types', $account)
+      || user_access('view booking entities', $account);
+    case 'edit':
+      return user_access('administer booking types')
+      || user_access('edit any booking entities')
+      || (user_access('edit own booking entities') && ($booking->uid == $account->uid));
+  }
+}
+
+/**
+ * Load a booking.
+ */
+function booking_load($bid, $reset = FALSE) {
+  $bookings = booking_load_multiple(array($bid), array(), $reset);
+  return reset($bookings);
+}
+
+/**
+ * Load multiple bookings based on certain conditions.
+ */
+function booking_load_multiple($bids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('booking', $bids, $conditions, $reset);
+}
+
+/**
+ * Save booking.
+ */
+function booking_save($booking) {
+  entity_save('booking', $booking);
+}
+
+/**
+ * Delete single booking.
+ */
+function booking_delete($booking) {
+  entity_delete('booking', entity_id('booking', $booking));
+}
+
+/**
+ * Delete multiple bookings.
+ */
+function booking_delete_multiple($booking_ids) {
+  entity_delete_multiple('booking', $booking_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** Booking type API's *****************************
+******************************************************************************/
+
+/**
+ * Access callback for booking type.
+ */
+function booking_type_access($op, $entity = NULL) {
+  return user_access('administer booking types');
+}
+
+/**
+ * Load booking type.
+ */
+function booking_type_load($booking_type) {
+  return booking_type_get_types($booking_type);
+}
+
+/**
+ * List of booking types.
+ */
+function booking_type_get_types($type_name = NULL) {
+  $types = entity_load_multiple_by_name('booking_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Save booking type entity.
+ */
+function booking_type_save($booking_type) {
+  entity_save('booking_type', $booking_type);
+}
+
+/**
+ * Delete single case type.
+ */
+function booking_type_delete($booking_type) {
+  entity_delete('booking_type', entity_id('booking_type', $booking_type));
+}
+
+/**
+ * Delete multiple case types.
+ */
+function booking_type_delete_multiple($booking_type_ids) {
+  entity_delete_multiple('booking_type', $booking_type_ids);
+}
+
+/*******************************************************************************
+ ********************************* Resource API's ******************************
+******************************************************************************/
+
+/**
+ * Access callback for resource.
+ */
+function resource_access($op, $resource, $account = NULL, $entity_type = NULL) {
+  global $user;
+
+  if (!isset($account)) {
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('administer resource types', $account)
+      || user_access('create resource entities', $account);
+    case 'view':
+      return user_access('administer resource types', $account)
+      || user_access('view resource entities', $account);
+    case 'edit':
+      return user_access('administer resource types')
+      || user_access('edit any resource entities')
+      || (user_access('edit own resource entities') && ($resource->uid == $account->uid));
+  }
+}
+
+/**
+ * Load a resource.
+ */
+function resource_load($rid, $reset = FALSE) {
+  $resources = resource_load_multiple(array($rid), array(), $reset);
+  return reset($resources);
+}
+
+/**
+ * Load multiple resources based on certain conditions.
+ */
+function resource_load_multiple($rids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('resource', $rids, $conditions, $reset);
+}
+
+/**
+ * Save resource.
+ */
+function resource_save($resource) {
+  entity_save('resource', $resource);
+}
+
+/**
+ * Delete single resource.
+ */
+function resource_delete($resource) {
+  entity_delete('resource', entity_id('resource', $resource));
+}
+
+/**
+ * Delete multiple resources.
+ */
+function resource_delete_multiple($resource_ids) {
+  entity_delete_multiple('resource', $resource_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** Resource type API's ****************************
+******************************************************************************/
+
+/**
+ * Access callback for resource type.
+ */
+function resource_type_access($op, $entity = NULL) {
+  return user_access('administer resource types');
+}
+
+/**
+ * Load resource type.
+ */
+function resource_type_load($resource_type) {
+  return resource_type_get_types($resource_type);
+}
+
+/**
+ * List of resource types.
+ */
+function resource_type_get_types($type_name = NULL) {
+  $types = entity_load_multiple_by_name('resource_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Save resource type entity.
+ */
+function resource_type_save($resource_type) {
+  entity_save('resource_type', $resource_type);
+}
+
+/**
+ * Delete single case type.
+ */
+function resource_type_delete($resource_type) {
+  entity_delete('resource_type', entity_id('resource_type', $resource_type));
+}
+
+/**
+ * Delete multiple case types.
+ */
+function resource_type_delete_multiple($resource_type_ids) {
+  entity_delete_multiple('resource_type', $resource_type_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** Views related hooks ****************************
+******************************************************************************/
+
+/**
+ * Implements hook_views_pre_render().
+ */
+
+function resource_booking_views_pre_render(&$view) {
+  //This function sets the views grid columns equal to number of arguments (hours) sent
+  //Also creates a link to navigate to the next hours
+
+  dsm($view);
+  if ($view->name == 'bookings_2') {
+    if($view->args) {
+      $new_args=explode(" ",$view->args[0]); //Create an array with number of hours
+      $number_of_hours=count($new_args);
+      $view->style_plugin->options['columns']=$number_of_hours;
+      $next_hour=end($new_args)+1;
+      $next_args="";//Jsut to get rid of a php error about using an undeclared variable
+
+      for ($i = 1; $i <= $number_of_hours; $i++) {
+        if ($next_hour<22){
+          $next_args.=$next_hour;
+          if ($i != $number_of_hours && $next_hour != 21){
+            $next_args.="+";
+          }
+          $next_hour++;
+        }
+      }
+       
+      $view->header["area_text_custom"]->options["content"]="<a href='/bookings-2/".$next_args."'>Navigate to next view</a> ";
+    }
+  }
+}
+
+/*******************************************************************************
+ ****************************** Rules related hooks ****************************
+******************************************************************************/
+
+
+/**
+ * * Implements hook_rules_action_info()
+ *
+ */
+
+function resource_booking_rules_action_info() {
+  return array(
+    'create_booking_units_week' => array(
+      'group' => t('Bookings'),
+      'label' => t('Create 1 week of booking units'),
+      'parameter' => array (
+        'type' => array(
+          'type' => 'text',
+          'label' => t('Resource type'),
+          'options list' => 'rules_resource_type_list',
+          'description' => t('Choose all resources or select a resource type'),
+          'restriction' => 'input',
+
+        )
+
+      )
+    ),
+    'delete_booking_units_week' => array(
+      'group' => t('Bookings'),
+      'label' => t('Delete 1 week ofbooking units'),
+      'parameter' => array (
+        'type' => array(
+          'type' => 'text',
+          'label' => t('Resource type'),
+          'options list' => 'rules_resource_type_list',
+          'description' => t('Choose all resources or select a resource type'),
+          'restriction' => 'input',
+
+        )
+
+      )
+    ),
+  );
+}
+
+
+
+/****
+ *A rules action that creates one week of booking units
+*Either a week from the booking unit that has the most advanced date
+*Or a week from today i no booking units yet exist
+*/
+function create_booking_units_week($type) {
+
+  //Get the relevant resources
+  if ($type=="all_resources") {
+    //If all resources, get all bundle types
+    $type_array=array_keys(resource_type_get_types());
+  } else{
+    //Else just get the type sent
+    $type_array=array();
+    $type_array[]=$type;
+  }
+
+  foreach ($type_array as $resource_type) {
+    //Do a loop for each resource type and create the necessary booking units
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'resource')
+    ->entityCondition("bundle", $resource_type)
+    ->addMetaData('account', user_load(1)); // Run the query as user 1.
+    $result = $query->execute();
+    if (isset($result['resource'])) {
+      $room_ids = array_keys($result['resource']);
+      //Retrieve the existing bookings
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'booking')
+      ->propertyCondition("resource", $room_ids, 'IN');
+      $result = $query->execute();
+    } else {
+      //If no resources for this type, clean out variables that are left from previous loops
+      unset($room_ids); $rooms_id=array(); unset($result); 
+    }
+   
+    
+
+    if (!isset($result['booking'])) {
+      //If no bookings exist set today as startday
+      $startdate_timestamp = time(); //timestamp
+      $startdate_string=date('Ymd',$startdate_timestamp); //(todays date in format yyyymmdd)
+    } else {
+      //Else retrieve booking with most advanced date to use as startdate
+      $ids = array_keys($result['booking']);
+      $last_booking_id=array();
+      $last_booking_id[]=end($ids); //This captures the last booking unit made.  IF booking units are made with this module, the last made will be most advanced date
+      $last_booking = entity_load('booking',($last_booking_id));
+      $lastdate_string=$last_booking["$last_booking_id[0]"]->date;//Get date of last booking  in string format
+      $lastdate_timestamp=strtotime($lastdate_string); //Convert lastdate to timestamp
+      $startdate_timestamp=strtotime("+1 day",$lastdate_timestamp); //Set startdate to 1 day after the date of last booking
+      $startdate_string=date('Ymd', $startdate_timestamp);
+    }
+    //Set enddate to 1 week from startdate
+    $enddate_timestamp = strtotime("+6 day", $startdate_timestamp);
+    $enddate_string=date('Ymd', $enddate_timestamp);
+
+    /*
+     * Determine the default max opening and closing hours
+    */
+    $opening_hour=9;
+    $closing_hour=21;
+
+
+
+    /*
+     * Run a loop which goes through the days and creates
+    * Booking units for each of the resources
+    */
+
+    foreach ($room_ids as $room_id) {//Loops through each room id
+      for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){ //Loops through each date in the date range
+        $loop_date=date("Ymd",$i); //A string version of the date for use in the loop starts with the beginning date and goes forward 1 day at a time
+
+        for ($h = $opening_hour; $h <= $closing_hour; $h++) {  //loops through every hour and creates a booking unit
+          $e = entity_create('booking' , array('type' => 'booking'));
+          $ew = entity_metadata_wrapper('booking',$e);
+          $ew->title->set($loop_date."_".$h."_".$room_id);//Not sure what the title should be yet
+
+          $ew->resource->set("$room_id");
+          $ew->date->set($loop_date);
+
+          $ew->starthour->set($h);
+
+          $ew->save();
+        }
+      }
+    }
+
+  }
+
+}
+
+/****
+ *A rules action that delete a week of bookings
+*The week from the earliest bookings
+*/
+
+function delete_booking_units_week($type) {
+  /****
+   *A rules action that deletes one week of booking units
+  *the week is the one with the oldest date
+  */
+  //Get the relevant resources
+  if ($type=="all_resources") {
+    //If all resources, get all bundle types
+    $type_array=array_keys(resource_type_get_types());
+  } else{
+    //Else just get the type sent
+    $type_array=array();
+    $type_array[]=$type;
+  }
+
+
+  foreach ($type_array as $resource_type) {
+    //Do a loop for each resource type and delete the necessary booking units
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'resource')
+    ->entityCondition("bundle",$resource_type)
+    ->addMetaData('account', user_load(1)); // Run the query as user 1.
+    $result = $query->execute();
+    if (isset($result['resource'])) {
+      $room_ids = array_keys($result['resource']);
+    } 
+
+
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'booking')
+    ->propertyCondition("resource", $room_ids, 'IN');
+    $result = $query->execute();
+
+
+    //Establish start date based on bookings found if any
+    if (!isset($result['booking'])) {
+      //If no bookings exist do nothing
+      return;
+    } else {
+      //Else retrieve booking with earliest date to use as startdate
+      $ids = array_keys($result['booking']);
+      $first_booking_id=array();
+      $first_booking_id[]=reset($ids); //This captures the first booking unit made.  IF booking units are made with this module, the first made will be earliest date
+      $first_booking = entity_load('booking',($first_booking_id));
+      $firstdate_string=$first_booking["$first_booking_id[0]"]->date;//Get date of first booking  in string format
+      $firstdate_timestamp=strtotime($firstdate_string); //Convert lastdate to timestamp
+      $startdate_timestamp=$firstdate_timestamp; //Set startdate to date of rist booking
+      $startdate_string=date('Ymd', $startdate_timestamp);
+    }
+    //Set enddate to 1 week from startdate
+    $enddate_timestamp = strtotime("+6 day", $startdate_timestamp);
+    $enddate_string=date('Ymd', $enddate_timestamp);
+
+
+    /*
+     * Determine the default max opening and closing hours
+    */
+    $opening_hour=9;
+    $closing_hour=21;
+
+
+    //DO a loop to delete bookings for the correct dates
+    //Limit to type if necessary
+
+    //If type specified must loop through each resource and delete for the date range
+    foreach ($room_ids as $room_id) {
+      for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){
+        $loopdate_string=date('Ymd', $i);  //creates a datestring to match bookings with
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', 'booking')
+        ->entityCondition('bundle', 'booking')
+        ->propertyCondition('resource',$room_id)
+        ->propertyCondition('date',$loopdate_string)
+        ->addMetaData('account', user_load(1));
+        $result = $query->execute();
+        if (isset($result['booking'])) {
+          $ids = array_keys($result['booking']);
+        }
+        entity_delete_multiple('booking', $ids);
+      }
+    }
+  dsm($startdate_string);
+  dsm($enddate_string);
+  }
+  
+}
+
+
+
+
+function rules_resource_type_list() {
+  $types=array();
+
+  $types=resource_type_get_types();
+  $resource_types=array_keys($types);
+  array_unshift($resource_types,"all_resources");
+  $new_array=array_combine($resource_types,$resource_types);
+  return $new_array;
+
+
+}
