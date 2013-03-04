@@ -82,7 +82,7 @@ function resource_type_form_submit_delete(&$form, &$form_state) {
  * Resource type delete form.
  */
 function resource_type_form_delete_confirm($form, &$form_state, $resource_type) {
-  $form_state['resource_type'] = $resource_type;
+$form_state['resource_type'] = $resource_type;
   // Always provide entity id in the same form key as in the entity edit form.
   $form['resource_type_id'] = array('#type' => 'value', '#value' => entity_id('resource_type', $resource_type));
   return confirm_form($form,
@@ -99,11 +99,10 @@ function resource_type_form_delete_confirm($form, &$form_state, $resource_type) 
  */
 function resource_type_form_delete_confirm_submit($form, &$form_state) {
   $resource_type = $form_state['resource_type'];
-  resource_type_delete($resource_type);
-
+  //resource_type_delete($resource_type);
+  drupal_set_message("try again");
   watchdog('resource_type', '@type: deleted %title.', array('@type' => $resource_type->type, '%title' => $resource_type->label));
   drupal_set_message(t('@type %title has been deleted.', array('@type' => $resource_type->type, '%title' => $resource_type->label)));
-
   $form_state['redirect'] = 'admin/structure/resource-types';
 }
 
