@@ -36,10 +36,12 @@ function resource_booking_schema() {
       ),
       'date' => array(
         'description' => 'The date of the booking in the format yyyymmdd.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
+        'type' => 'datetime',
+        'mysql_type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'sqlite_type' => 'varchar',
+        'sqlsrv_type' => 'smalldatetime',
+        'not null' => FALSE,
       ),
        'booked' => array(
         'description' => 'If the booking unit is booked 1 is true.',
