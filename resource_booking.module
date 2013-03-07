@@ -293,8 +293,8 @@ function resource_booking_menu() {
     'file' => 'includes/resource.admin.inc',
   );
 
-  $items['admin/settings/resource_booking'] = array(
-    'title' => 'resource booking module settings',
+  $items['admin/config/administration/resource_booking'] = array(
+    'title' => 'Resource booking',
     'description' => 'Get started with resource bookings',
     'page callback' => 'resource_booking_config',
     'page arguments' => array('booking_initialize_form'),
@@ -305,7 +305,7 @@ function resource_booking_menu() {
   );
 
   // tab 1 - Initialize system
-  $items['admin/settings/resource_booking/initialize'] = array(
+  $items['admin/config/administration/resource_booking/initialize'] = array(
     'title' => 'Initialize booking system',                 // title in tab
     'page callback' => 'resource_booking_config',
     'page arguments' => array('booking_initialize_form'),
@@ -315,7 +315,7 @@ function resource_booking_menu() {
   );
 
   // tab 2 - Maintain system
-  $items['admin/settings/resource_booking/maintain'] = array(
+  $items['admin/config/administration/resource_booking/maintain'] = array(
     'title' => 'Administer Booking system',   // title in tab
     'page callback' => 'resource_booking_config',
     'page arguments' => array('booking_admin_form'),

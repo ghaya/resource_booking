@@ -8,4 +8,4 @@ dependencies[] = views
 files[] = includes/booking.controller.inc
 files[] = includes/resource.controller.inc
 
-configure = admin/settings/resource_booking
+configure = admin/config/administration/resource_booking
