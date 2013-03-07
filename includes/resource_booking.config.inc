@@ -14,6 +14,11 @@ function resource_booking_config($form_name) {
 function booking_initialize_form($form, &$form_state) {
 
 
+  // Provide a default date in the format YYYY-MM-DD HH:MM:SS.
+  $date = '2008-12-31 00:00:00';
+  $format = 'Y-m-d';
+
+
   $form['description'] = array(
     '#type' => 'item',
     '#title' => t('A form to create a new booking system'),
@@ -53,9 +58,11 @@ function booking_initialize_form($form, &$form_state) {
 
   $form['step4']['start_date'] = array(
     '#title' => t('Start_date'),
-    '#type' => 'textfield',
-    '#default_value' => 'yyyymmdd',
+    '#type' => 'date_popup',
+    '#default_value' => $date,
+    '#date_format' => $format,
     '#description' => t('The start date for creating booking units.'),
+    '#date_year_range' => '0:+1',
     '#required' => TRUE,
     '#size' => 30,
   );
@@ -96,8 +103,8 @@ function booking_initialize_form($form, &$form_state) {
 
 
 function booking_initialize_form_submit(&$form, &$form_state) {
-include "var/www/drupal/sites/all/modules/custom/resource_booking/resource_booking.rules.inc";
-create_booking_units_date('all_resources', $form_state['values']['start_date'], $form_state['values']['end_date']);
+  include "var/www/drupal/sites/all/modules/custom/resource_booking/resource_booking.rules.inc";
+  create_booking_units_date('all_resources', $form_state['values']['start_date'], $form_state['values']['end_date']);
 }
 
 function booking_admin_form($form, &$form_state) {
