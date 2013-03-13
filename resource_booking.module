@@ -324,7 +324,6 @@ function resource_booking_menu() {
    'file' => 'includes/resource_booking.config.inc',
  );
 
-
  //Adds a ajax callback that toggles the booking
  $items['booking/%/%/%/toggle'] = array(
    'page callback' => 'booking_toggle',
