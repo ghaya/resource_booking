@@ -1005,7 +1005,7 @@ function _batch_initialize_booking_system_batch($start_date, $end_date) {
    } //End loop room
   } //End loop hour
  }  //End date loop
- drupal_set_message (t("booking units created for all resources"));
+ drupal_set_message (t("Booking units for all resource types were created for the date range %start_date to %end_date", array('%start_date'=>$start_date, '%end_date'=>$end_date)));
 
 
 }

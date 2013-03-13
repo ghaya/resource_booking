@@ -70,7 +70,7 @@ function delete_booking_units_week($type) {
   $type_array=array();
   $type_array[]=$type;
  }
-
+ //Loop through each type
  foreach ($type_array as $type) {
   //Get relevant resources for types
   $query = new EntityFieldQuery();
@@ -86,7 +86,7 @@ function delete_booking_units_week($type) {
   }
 
 
-
+  //relevant bookings for the resources
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'booking')
   ->propertyCondition("resource", $resource_ids, 'IN');
@@ -107,35 +107,28 @@ function delete_booking_units_week($type) {
    $firstdate_timestamp=strtotime($firstdate_string); //Convert lastdate to timestamp
    $startdate_timestamp=$firstdate_timestamp; //Set startdate to date of rist booking
    $startdate_string=date('Ymd', $startdate_timestamp);
+   //Set enddate to 1 week from startdate
+   $enddate_timestamp = strtotime("+6 day", $startdate_timestamp);
+   $enddate_string=date('Ymd', $enddate_timestamp);
   }
-  //Set enddate to 1 week from startdate
-  $enddate_timestamp = strtotime("+6 day", $startdate_timestamp);
-  $enddate_string=date('Ymd', $enddate_timestamp);
-
-
 
   //DO a loop to delete bookings for the correct dates
+  for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){
+   $loopdate_string=date('Y-m-d H:i:s', $i); //creates a datestring to match bookings with
+   $query = new EntityFieldQuery();
+   $query->entityCondition('entity_type', 'booking')
+   ->entityCondition('bundle', 'booking')
+   ->propertyCondition("resource", $resource_ids, 'IN')  //this limits the bookings deleted to the type of the current loop
+   ->propertyCondition('date',$loopdate_string)
+   ->addMetaData('account', user_load(1));
+   $result = $query->execute();
+   if (isset($result['booking'])) {
+    $ids = array_keys($result['booking']);
+   }
 
-   for ( $i = $startdate_timestamp; $i <= $enddate_timestamp; $i += 86400 ){
-    $loopdate_string=date('Y-m-d H:i:s', $i); //creates a datestring to match bookings with
-    $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', 'booking')
-    ->entityCondition('bundle', 'booking')
-    ->propertyCondition("resource", $resource_ids, 'IN')
-    ->propertyCondition('date',$loopdate_string)
-    ->addMetaData('account', user_load(1));
-    $result = $query->execute();
-    if (isset($result['booking'])) {
-     $ids = array_keys($result['booking']);
-    }
-    //entity_delete_multiple('booking', $ids);
-    dsm($loopdate_string);
-    dsm($result);
-    dsm($ids);
+   entity_delete_multiple('booking', $ids);
 
-    $g=entity_delete_multiple('booking', $ids);
-    dsm($g);
-   }//End loop dates
+  }//End loop dates
 
   drupal_set_message (t("Bookings of type %type were deleted for the week starting %start_date to %end_date", array('%type'=>$type, '%start_date'=>$startdate_string, '%end_date'=>$enddate_string)));
  }//End loop type
@@ -188,7 +181,8 @@ function create_booking_units_week() {
 
   //Calling the original batch function doesn't seem to work from rules so I hade to call the individual functions
   _batch_initialize_booking_system_batch($startdate_string, $enddate_string);
-   _batch_another_initialize_booking_system_batch($startdate_string, $enddate_string);
+  _batch_another_initialize_booking_system_batch($startdate_string, $enddate_string);
+
  }
 
 
