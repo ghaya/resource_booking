@@ -3,34 +3,13 @@
 /*******************************************************************************
  ****************************** Batch API ****************************
 ******************************************************************************/
-function batch_initialize_booking_system($hour_type, $startdate, $enddate) {
 
- // batch metadata
- $batch = array(
-   'title' => t('Creating Bookable Units'), // Title to display while running.
-   'operations' => array(), // Operations to complete, in order. Defined below.
-   'finished' => '_batch_initialize_booking_system_batch_finished', // Last function to call.
-   'init_message' => t('Initializing...'),
-   'progress_message' => t('Fixed @current out of @total.'),
-   'error_message' => t('Updating of profiles encountered an error.'),
- );
-
- // Add as many operations as you need. They'll run in the order specified.
- // Parameters can be defined in the (currently) empty arrays and will need
- // to also be added following the $context parameters for the operation
- // functions below.
- $batch['operations'][] = array('_batch_initialize_booking_system_batch', array($hour_type,$startdate,$enddate));
- $batch['operations'][] = array('_batch_another_initialize_booking_system_batch', array());
-
- // Tip the first domino.
- batch_set($batch);
-}
 
 // Our first batch operation.  Note: $context contains Batch API data.
 function _batch_initialize_booking_system_batch($hour_type, $startdate, $enddate, &$context) {
 
- initialize_resource_booking_system($hour_type, $startdate, $enddate);
-
+ //initialize_resource_booking_system($hour_type, $startdate, $enddate);
+dsm ("hello")
  $context['finished'] = 1;
 
 }
@@ -40,8 +19,9 @@ function _batch_initialize_booking_system_batch($hour_type, $startdate, $enddate
  */
 function _batch_another_initialize_booking_system_batch(&$context) {
 
- include "includes/booking.batch.inc";
- drupal_set_message('Fired another batch operation.');
+
+ drupal_set_message(variable_get('resource_booking_hour_choice'));
+ drupal_set_message("this too");
 
  $context['finished'] = 1;
 }
@@ -50,7 +30,7 @@ function _batch_another_initialize_booking_system_batch(&$context) {
  * The function called when we finish. Displays a success or error message,
  * but could do anything.
  */
-function _batch_initialize_booking_system_finished($success, $results, $operations) {
+function _batch_initialize_booking_system_batch_finished($success, $results, $operations) {
 
  if ($success) {
   $message = t('All users have had first and last names processed.');
@@ -61,9 +41,14 @@ function _batch_initialize_booking_system_finished($success, $results, $operatio
  drupal_set_message($message);
 }
 
+
+/**
+ *  This first function creates the bookable units for all resources, either based
+ *  on the 12 hour or 24 hour system depending on what the user has selected
+ */
 function initialize_resource_booking_system($hour_type, $start_date, $end_date) {
-
-
+dsm("hello");
+/*
  //Convert start dates and end dates to timestamps
  $start_date_timestamp=strtotime($start_date);
  $end_date_timestamp=strtotime($end_date);
@@ -126,5 +111,9 @@ function initialize_resource_booking_system($hour_type, $start_date, $end_date) 
  }  //End date loop
  drupal_set_message (t("booking units created for all resources"));
 
+*/
+}
 
+function YOYO(){
+   $context['finished'] = 0;
 }

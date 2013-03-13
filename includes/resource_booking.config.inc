@@ -131,9 +131,10 @@ function booking_initialize_form($form, &$form_state) {
 
 
 function booking_initialize_form_submit(&$form, &$form_state) {
-
+ //  variable_set('resource_booking_hour_choice', $form_state['values']['hour_choice']);
   //create_booking_units_date('all_resources', $form_state['values']['start_date'], $form_state['values']['end_date']);
- include "booking.batch.inc";
+ //dsm(variable_get('resource_booking_hour_choice'));
+
  batch_initialize_booking_system($form_state['values']['hour_choice'], $form_state['values']['start_date'],  $form_state['values']['end_date'] );
 
 }
