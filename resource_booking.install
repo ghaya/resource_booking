@@ -55,6 +55,42 @@ function resource_booking_schema() {
         'description' => 'booking description.',
         'type' => 'text',
       ),
+      'date' => array(
+       'description' => 'The date of the booking in the format yyyymmdd.',
+       'type' => 'datetime',
+       'mysql_type' => 'datetime',
+       'pgsql_type' => 'timestamp without time zone',
+       'sqlite_type' => 'varchar',
+       'sqlsrv_type' => 'smalldatetime',
+       'not null' => FALSE,
+     ),
+      'booked' => array(
+       'description' => 'If the booking unit is booked 1 is true.',
+       'type' => 'int',
+       'not null' => TRUE,
+       'default' => '0',
+     ),
+     'bookable' => array(
+       'description' => 'If the booking unit is bookable 1 is true',
+       'type' => 'int',
+       'not null' => TRUE,
+       'default' => '0',
+     ),
+     'resource' => array(
+       'description' => 'A reference to the resource connected to the booking',
+       'type' => 'int',
+       'not null' => TRUE,
+       'default' => '0',
+     ),
+     'starthour' => array(
+       'description' => 'The start hour for the booking',
+       'type' => 'int',
+       'not null' => TRUE,
+       'default' => '0',
+     ),
+      
+      
+      
     ),
     'primary key' => array('bid'),
   );

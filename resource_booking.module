@@ -292,6 +292,47 @@ function resource_booking_menu() {
     'file' => 'includes/resource.admin.inc',
   );
 
+ $items['admin/config/administration/resource_booking'] = array(
+   'title' => 'Resource booking',
+   'description' => 'Get started with resource bookings',
+   'page callback' => 'resource_booking_config',
+   'page arguments' => array('booking_initialize_form'),
+   'access arguments' => array('administer resource_booking settings'),
+   'weight' => 1,
+   'type' => MENU_NORMAL_ITEM,
+   'file' => 'includes/resource_booking.config.inc',
+ );
+
+ // tab 1 - Initialize system
+ $items['admin/config/administration/resource_booking/initialize'] = array(
+   'title' => 'Initialize booking system',                 // title in tab
+   'page callback' => 'resource_booking_config',
+   'page arguments' => array('booking_initialize_form'),
+   'access arguments' => array('administer resource_booking settings'),
+   'type' => MENU_LOCAL_TASK,
+   'file' => 'includes/resource_booking.config.inc',
+ );
+
+ // tab 2 - Maintain system
+ $items['admin/config/administration/resource_booking/maintain'] = array(
+   'title' => 'Administer Booking system',   // title in tab
+   'page callback' => 'resource_booking_config',
+   'page arguments' => array('booking_admin_form'),
+   'access arguments' => array('administer resource_booking settings'),
+   'type' => MENU_LOCAL_TASK,
+   'file' => 'includes/resource_booking.config.inc',
+ );
+
+ //Adds a ajax callback that toggles the booking
+ $items['booking/%/%/%/toggle'] = array(
+   'page callback' => 'booking_toggle',
+   'page arguments' => array(1,2,3),
+   'access arguments' => array('administer booking types'),
+   'delivery callback' => 'ajax_deliver',
+   'type' => MENU_CALLBACK,
+   'file' => 'includes/booking.ajax.inc',
+ );
+
   return $items;
 }
 
@@ -408,6 +449,47 @@ function resource_booking_permission() {
  */
 function resource_booking_entity_property_info_alter(&$info) {
   $properties = &$info['booking']['properties'];
+   $properties['date'] = array(
+   'label' => t('Date of booking'),
+   'type' => 'text',
+   'description' => t('The date of the booking.'),
+   'setter callback' => 'entity_property_verbatim_set',
+   'setter permission' => 'administer booking types',
+   'schema field' => 'date',
+ );
+ $properties['booked'] = array(
+   'label' => t('Booked?'),
+   'type' => 'integer',
+   'description' => t('Is the unit booked? 1 = yes 0 =no.'),
+   'setter callback' => 'entity_property_verbatim_set',
+   'setter permission' => 'administer booking types',
+   'schema field' => 'booked',
+ );
+ $properties['bookable'] = array(
+   'label' => t('Bookable?'),
+   'type' => 'integer',
+   'description' => t('Is the unit bookable? 1 = yes 0 =no.'),
+   'setter callback' => 'entity_property_verbatim_set',
+   'setter permission' => 'administer booking types',
+   'schema field' => 'bookable',
+ );
+ $properties['resource'] = array(
+   'label' => t('Resource'),
+   'type' => 'resource',
+   'description' => t('The resource entity that the unit is connected to.'),
+   'setter callback' => 'entity_property_verbatim_set',
+   'setter permission' => 'administer booking types',
+   'schema field' => 'resource',
+ );
+ $properties['starthour'] = array(
+   'label' => t('Start hour'),
+   'type' => 'integer',
+   'description' => t('The hour the booking starts.'),
+   'setter callback' => 'entity_property_verbatim_set',
+   'setter permission' => 'administer booking types',
+   'schema field' => 'starthour',
+ );
+  
   $properties['created'] = array(
     'label' => t('Date created'),
     'type' => 'date',
