@@ -1,0 +1,462 @@
+<?php
+
+/**
+ * Implements hook_views_api().
+ */
+function opening_hour_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'opening_hour') . '/views',
+  );
+}
+//TODO:  HAVE TO ADD THE OPENING HOURS VIEW THAT SHOWS OPENING HOURS BY TYPE; DONE NOW AS A VIEW IN DRUPAL ADMIN
+
+/**
+ * Implements hook_entity_info().
+ */
+function opening_hour_entity_info() {
+  $entities = array();
+
+  $entities['hour'] = array(
+    'label' => t('Hour'),
+    'entity class' => 'Hour',
+    'controller class' => 'HourController',
+    'base table' => 'hour',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'hid',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'load hook' => 'hour_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'opening_hour',
+    'access callback' => 'hour_access',
+  );
+
+  $entities['hour_type'] = array(
+    'label' => t('Hour type'),
+    'entity class' => 'HourType',
+    'controller class' => 'HourTypeController',
+    'base table' => 'hour_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'hour',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'htid',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'module' => 'opening_hour',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/structure/hour-types',
+      'file' => 'includes/hour.admin.inc',
+      'controller class' => 'HourTypeUIController',
+    ),
+    'access callback' => 'hour_type_access',
+  );
+
+
+
+  return $entities;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function opening_hour_entity_info_alter(&$entity_info) {
+  foreach (hour_type_get_types() as $type => $info) {
+    $entity_info['hour']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/structure/hour-types/manage/%hour_type',
+        'real path' => 'admin/structure/hour-types/manage/' . $type,
+        'bundle argument' => 4,
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function opening_hour_menu() {
+  $items = array();
+
+  // hour
+  $items['hour/add'] = array(
+    'title' => 'Add Hour',
+    'page callback' => 'hour_admin_add_page',
+    'access arguments' => array('administer hour types'),
+    'file' => 'includes/hour.admin.inc',
+  );
+
+  foreach (hour_type_get_types() as $type => $info) {
+    $items['hour/add/' . $type] = array(
+      'title' => 'Add hour',
+      'page callback' => 'hour_add',
+      'page arguments' => array(2),
+      'access callback' => 'entity_access',
+      'access arguments' => array('create', 'hour', $type),
+      'file' => 'includes/hour.admin.inc',
+    );
+  }
+
+  $hour_uri = 'hour/%hour';
+  $hour_uri_argument_position = 1;
+
+  $items[$hour_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('hour', $hour_uri_argument_position),
+    'page callback' => 'hour_view',
+    'page arguments' => array($hour_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 'hour', $hour_uri_argument_position),
+    'file' => 'includes/hour.pages.inc',
+  );
+
+  $items[$hour_uri . '/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items[$hour_uri . '/delete'] = array(
+    'title' => 'Delete hour',
+    'title callback' => 'hour_label',
+    'title arguments' => array($hour_uri_argument_position),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hour_delete_form', $hour_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'hour', $hour_uri_argument_position),
+    'file' => 'includes/hour.admin.inc',
+  );
+
+  $items[$hour_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hour_form', $hour_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'hour', $hour_uri_argument_position),
+    'file' => 'includes/hour.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  $items['admin/structure/hour-types/%hour_type/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hour_type_form_delete_confirm', 4),
+    'access arguments' => array('administer hour types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/hour.admin.inc',
+  );
+
+
+  return $items;
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function opening_hour_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  switch ($root_path) {
+    case 'hour':
+      // Add action link to 'hour/add' on 'hour' page.
+      $item = menu_get_item('hour/add');
+      if ($item['access']) {
+        $data['actions']['output'][] = array(
+          '#theme' => 'menu_local_action',
+          '#link' => $item,
+        );
+      }
+      break;
+
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function opening_hour_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    $paths = array(
+      'hour/*/edit' => TRUE,
+      'hour/*/delete' => TRUE,
+      'hour/add' => TRUE,
+      'hour/add/*' => TRUE,
+    );
+    return $paths;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function opening_hour_permission() {
+  $permissions = array(
+    'administer hour types' => array(
+      'title' => t('Administer hour types'),
+      'description' => t('Allows users to configure hour types and their fields.'),
+      'restrict access' => TRUE,
+    ),
+    'create hour entities' => array(
+      'title' => t('Create hours'),
+      'description' => t('Allows users to create hours.'),
+      'restrict access' => TRUE,
+    ),
+    'view hour entities' => array(
+      'title' => t('View hours'),
+      'description' => t('Allows users to view hours.'),
+      'restrict access' => TRUE,
+    ),
+    'edit any hour entities' => array(
+      'title' => t('Edit any hours'),
+      'description' => t('Allows users to edit any hours.'),
+      'restrict access' => TRUE,
+    ),
+    'edit own hour entities' => array(
+      'title' => t('Edit own hours'),
+      'description' => t('Allows users to edit own hours.'),
+      'restrict access' => TRUE,
+    ),
+
+  );
+
+  return $permissions;
+}
+
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+
+// property types are here http://drupal.org/node/905580
+function opening_hour_entity_property_info_alter(&$info) {
+  $properties = &$info['hour']['properties'];
+  $properties['start_date'] = array(
+    'label' => t('Start date of opening hour'),
+    'type' => 'date',
+    'description' => t('The start date of the opening hour.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'start_date',
+  );
+  $properties['end_date'] = array(
+    'label' => t('End date of opening hour'),
+    'type' => 'date',
+    'description' => t('The end date of the opening hour.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'end_date',
+  );
+   $properties['resource_reference_id'] = array(
+    'label' => t('ID of corresponding resource'),
+    'type' => 'integer',
+    'description' => t('The id of the resource connected to opening hour.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'resource_reference_id',
+  );
+    $properties['opening_hour'] = array(
+    'label' => t('Opening Hour'),
+    'type' => 'integer',
+    'description' => t('The first hour where the resource is available'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'opening_hour',
+  );
+      $properties['closing_hour'] = array(
+    'label' => t('Closing Hour'),
+    'type' => 'integer',
+    'description' => t('The first hour where the resource is not available'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'closing_hour',
+  );
+        $properties['exception_hour'] = array(
+    'label' => t('Hour unavailable'),
+    'type' => 'integer',
+    'description' => t('An hour in the middle of the day where the resource is unavailable'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'exception_hour',
+  );
+
+
+  $properties['created'] = array(
+    'label' => t('Date created'),
+    'type' => 'date',
+    'description' => t('The date the hour was posted.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t('Date changed'),
+    'type' => 'date',
+    'description' => t('The date the hour was most recently updated.'),
+    'schema field' => 'changed',
+  );
+  $properties['uid'] = array(
+    'label' => t('Author'),
+    'type' => 'user',
+    'description' => t('The author of the hour.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
+  $properties['title'] = array(
+    'label' => t('Title'),
+    'type' => 'text',
+    'description' => t('The title of the hour.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'required' => TRUE,
+    'schema field' => 'title',
+  );
+
+  $properties2 = &$info['hour_type']['properties'];
+  $properties2['label'] = array(
+    'label' => t('Title'),
+    'type' => 'text',
+    'description' => t('The title of the hour type.'),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer hour types',
+    'schema field' => 'label',
+  );
+
+
+}
+
+
+
+
+/*******************************************************************************
+ ********************************* hour API's *******************************
+******************************************************************************/
+
+/**
+ * Access callback for hour.
+ */
+function hour_access($op, $hour, $account = NULL, $entity_type = NULL) {
+  global $user;
+
+  if (!isset($account)) {
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('administer hour types', $account)
+      || user_access('create hour entities', $account);
+    case 'view':
+      return user_access('administer hour types', $account)
+      || user_access('view hour entities', $account);
+    case 'edit':
+      return user_access('administer hour types')
+      || user_access('edit any hour entities')
+      || (user_access('edit own hour entities') && ($hour->uid == $account->uid));
+  }
+}
+
+/**
+ * Load a hour.
+ */
+function hour_load($hid, $reset = FALSE) {
+  $hours = hour_load_multiple(array($hid), array(), $reset);
+  return reset($hours);
+}
+
+/**
+ * Load multiple hours based on certain conditions.
+ */
+function hour_load_multiple($hids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('hour', $hids, $conditions, $reset);
+}
+
+/**
+ * Save hour.
+ */
+function hour_save($hour) {
+  entity_save('hour', $hour);
+}
+
+/**
+ * Delete single hour.
+ */
+function hour_delete($hour) {
+  entity_delete('hour', entity_id('hour', $hour));
+}
+
+/**
+ * Delete multiple hours.
+ */
+function hour_delete_multiple($hour_ids) {
+  entity_delete_multiple('hour', $hour_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** hour type API's *****************************
+******************************************************************************/
+
+/**
+ * Access callback for hour type.
+ */
+function hour_type_access($op, $entity = NULL) {
+  return user_access('administer hour types');
+}
+
+/**
+ * Load hour type.
+ */
+function hour_type_load($hour_type) {
+  return hour_type_get_types($hour_type);
+}
+
+/**
+ * List of hour types.
+ */
+function hour_type_get_types($type_name = NULL) {
+  $types = entity_load_multiple_by_name('hour_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Save hour type entity.
+ */
+function hour_type_save($hour_type) {
+  entity_save('hour_type', $hour_type);
+}
+
+/**
+ * Delete single case type.
+ */
+function hour_type_delete($hour_type) {
+  entity_delete('hour_type', entity_id('hour_type', $hour_type));
+}
+
+/**
+ * Delete multiple case types.
+ */
+function hour_type_delete_multiple($hour_type_ids) {
+  entity_delete_multiple('hour_type', $hour_type_ids);
+}
+
+
+
+
+

@@ -1,0 +1,136 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the resource hour module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function opening_hour_schema() {
+  $schema = array();
+
+  $schema['hour'] = array(
+    'description' => 'The base table for opening hour.',
+    'fields' => array(
+      'hid' => array(
+        'description' => 'The primary identifier for opening hours.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type (bundle) of this opening hour.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'The title of the opening hour.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'start_date' => array(
+        'description' => 'The start date of the opening hour in the format yyyymmdd.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'end_date' => array(
+        'description' => 'The end date of the opening hour in the format yyyymmdd.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'opening_hour' => array(
+        'description' => 'The end date of the opening hour in the format yyyymmdd.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'closing_hour' => array(
+        'description' => 'The end date of the opening hour in the format yyyymmdd.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+       'exception_hour' => array(
+        'description' => 'The end date of the opening hour in the format yyyymmdd.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'resource_reference' => array(
+        'description' => 'ID of resource opening hours is connected to.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => '0',
+      ),
+      'uid' => array(
+        'description' => 'ID of Drupal user creator.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the hour was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the hour was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'description' => array(
+        'description' => 'opening hours description.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('hid'),
+  );
+
+  $schema['hour_type'] = array(
+    'description' => 'Stores information about all defined hour types.',
+    'fields' => array(
+      'htid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique hour type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'A brief description of this type.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'medium',
+        'translatable' => TRUE,
+      ),
+    ) + entity_exportable_schema_fields(),
+    'primary key' => array('htid'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+
+
+  return $schema;
+}

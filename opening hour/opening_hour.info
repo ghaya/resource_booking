@@ -1,0 +1,9 @@
+name = Opening hour
+description = Opening hours
+core = 7.x
+
+dependencies[] = entity
+dependencies[] = views
+
+files[] = includes/hour.controller.inc
+
