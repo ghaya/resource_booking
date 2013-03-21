@@ -26,19 +26,7 @@ function booking_initialize_form($form, &$form_state) {
    '#type' => 'item',
    '#title' => t('A form to create a new booking system'),
  );
- /*
-  $form['step1'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('12 hour vs 24 hour system'),
-  );
-
- $form['step1']['hour_choice'] = array(
-   '#type' => 'radios',
-   '#default_value' => '0',
-   '#options' => $hour_choice,
-   '#description' => t('This defines the minimum and maximum bookable hours for the entire system.  You can define specific opening hours per resource type later. If your resources are just going to be bookable during the daytime (6AM to midnight) choose 12 hours, otherwise choose a 24 hour system.'),
- );
- */
+ 
  $form['step2'] = array(
    '#type' => 'fieldset',
    '#title' => t('Resource Type'),
@@ -121,8 +109,7 @@ function booking_initialize_form($form, &$form_state) {
 
 function booking_initialize_form_submit(&$form, &$form_state) {
 
- variable_set('resource_booking_hour_choice', 1);
- //batch_initialize_booking_system($form_state['values']['start_date'],  $form_state['values']['end_date'] );
+  batch_initialize_booking_system($form_state['values']['start_date'],  $form_state['values']['end_date'] );
 
 }
 
