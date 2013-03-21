@@ -149,6 +149,8 @@ function resource_booking_permission() {
  */
 function resource_booking_entity_property_info_alter(&$info) {
   $properties = &$info['booking']['properties'];
+  $properties['title'] = array('label' => t('Title'), 'type' => 'text', 'description' => t('The title of the booking.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'title', );
+  
   $properties['date'] = array('label' => t('Date of booking'), 'type' => 'text', 'description' => t('The date of the booking.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'date', );
   $properties['booked'] = array('label' => t('Booked?'), 'type' => 'integer', 'description' => t('Is the unit booked? 1 = yes 0 =no.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'booked', );
   $properties['bookable'] = array('label' => t('Bookable?'), 'type' => 'integer', 'description' => t('Is the unit bookable? 1 = yes 0 =no.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'bookable', );
