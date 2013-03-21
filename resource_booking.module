@@ -762,3 +762,133 @@ function resource_type_delete_multiple($resource_type_ids) {
   entity_delete_multiple('resource_type', $resource_type_ids);
 }
 
+
+/*******************************************************************************
+ ****************************** Views related hooks ****************************
+******************************************************************************/
+
+/**
+ * Implements hook_views_pre_render().
+ */
+
+function resource_booking_views_pre_render(&$view) {
+ //This function sets the views grid columns equal to number of arguments (hours) sent
+ //Also creates a link to navigate to the next hours
+
+
+ if ($view->name == 'bookings_2') {
+  if($view->args) {
+   $new_args=explode(" ",$view->args[0]); //Create an array with number of hours
+   $number_of_hours=count($new_args);
+   $view->style_plugin->options['columns']=$number_of_hours;
+   $next_hour=end($new_args)+1;
+   $next_args="";//Jsut to get rid of a php error about using an undeclared variable
+
+   for ($i = 1; $i <= $number_of_hours; $i++) {
+    if ($next_hour<22){
+     $next_args.=$next_hour;
+     if ($i != $number_of_hours && $next_hour != 21){
+      $next_args.="+";
+     }
+     $next_hour++;
+    }
+   }
+
+   $view->header["area_text_custom"]->options["content"]="<a href='/bookings-2/".$next_args."'>Navigate to next view</a> ";
+  }
+ }
+}
+
+/*******************************************************************************
+ ****************************** Form_alter hooks ****************************
+******************************************************************************/
+
+/**
+ * Implements hook_form_alter().
+ */
+function resource_booking_form_alter(&$form, &$form_state, $form_id) {
+ if($form_id == 'resource_type_operation_form') {
+  //TODO get rid of DSM
+  dsm("When deleting a resource type, the hour entities associated with that resource will also be deleted");
+  if ($form_state['op']=="delete" && $form_state['entity_type']=="resource_type") {
+   $form['#submit'][]="delete_hours_submit_function";
+  }
+ }
+ if($form_id == 'resource_type_form') {
+
+  if ($form_state['op']=="add") {
+   //TODO GET Rid of DSM
+   dsm("When creating a resource type, the hour entities associated with that resource will also be created");
+   $form['#submit'][]="create_hours_submit_function";
+  }
+ }
+}
+
+function delete_hours_submit_function ($form, &$form_state) {
+ //This function deletes the hour entities associated with a resource
+ $type=$form_state["resource_type"]->type;
+ $rtid=$form_state["resource_type"]->rtid;
+
+ //First delete all hours that are of the type
+ $query = new EntityFieldQuery();
+ $query
+ ->entityCondition('entity_type', 'hour')
+ ->propertyCondition('type', $type);
+ $result = $query->execute();
+ $hour_type_id = array_keys($result['hour']);
+ foreach ($hour_type_id as $id) {
+  entity_delete("hour_type",$id);
+  drupal_set_message(t('Hour deleted.'));
+ }
+
+
+
+ //Then delete the hour type itself
+ $query = new EntityFieldQuery();
+ $query
+ ->entityCondition('entity_type', 'hour_type')
+ ->propertyCondition('type', $type);
+ $result = $query->execute();
+ $hour_type_id = array_keys($result['hour_type']);
+ foreach ($hour_type_id as $id) {
+  entity_delete("hour_type",$id);
+  drupal_set_message(t('Hour type %title deleted.', array('%title' => $type)));
+ }
+}
+
+function create_hours_submit_function ($form, &$form_state) {
+ //This function creates hour entities associated with a resource
+ $hour_type=$form_state["resource_type"]->type;
+ $rtid=$form_state["resource_type"]->rtid;
+
+ //Check to see if hour type exists, if not create one for this content type
+ $query = new EntityFieldQuery();
+ $query
+ ->entityCondition('entity_type', 'hour_type', '=')
+ ->propertyCondition('type', $hour_type , '=');
+ $result = $query->execute();
+
+ //If no hour type exists yet create it and create the corresponding hour entities for each day
+ if (!$result){
+  //After saving new booking type create new Hour type
+  $hour_description="default hours for ".$hour_type;
+  $e=entity_create('hour_type', array('label' => "opening hours for ".$hour_type, 'type' => $hour_type, 'description' => $hour_description, 'resource_reference' => $rtid));
+  hour_type_save($e);
+  drupal_set_message(t('Hour type %title created.', array('%title' => $hour_type)));
+
+  //And create instances of the hour type for the days of the week
+  $days = array(
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  );
+  foreach ($days as $day) {
+   $e=entity_create('hour', array('type' => $hour_type, 'title' => $day, 'description' => $hour_description));
+   hour_save($e);
+  }
+ }
+}
