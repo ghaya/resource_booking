@@ -677,3 +677,26 @@ function _batch_initialize_booking_system_finished($success, $results, $operatio
   }
   drupal_set_message($message);
 }
+
+
+/*******************************************************************************
+ ****************************** Cron hook****************************
+ ******************************************************************************/
+
+function resource_booking_cron(){
+  
+if (!variable_get('resource_booking_cron_last_run'))  {
+    drupal_set_message("not set");
+    variable_set('resource_booking_cron_last_run', time());
+} else {
+  
+  drupal_set_message(variable_get('resource_booking_cron_last_run'));
+}
+  
+//$last_run = variable_get('mymodule_cron_last_run', REQUEST_TIME);
+
+  //$one_week = strtotime('+7 days', $last_run);
+  //if {$one_week > time()}
+  
+  
+}
