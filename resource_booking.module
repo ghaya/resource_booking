@@ -498,7 +498,7 @@ function create_hours_submit_function($form, &$form_state) {
  ****************************** Batch API ****************************
  ******************************************************************************/
 function batch_initialize_booking_system($startdate, $enddate) {
-
+ 
   // batch metadata
   $batch = array('title' => t('Creating Bookable Units'), // Title to display while running.
   'operations' => array(), // Operations to complete, in order. Defined below.
@@ -514,13 +514,15 @@ function batch_initialize_booking_system($startdate, $enddate) {
 
   // Tip the first domino.
   batch_set($batch);
+    
+  batch_process('admin/config/administration/resource_booking');
 }
 
 /**
  * Our first operation, creates bookable units for all resources for either 12 hours or 24 hours depending on their choice in the module config screen.
  */
 function _batch_initialize_booking_system_batch($start_date, $end_date) {
-
+  
   //Convert start dates and end dates to timestamps
   $start_date_timestamp = strtotime($start_date);
   $end_date_timestamp = strtotime($end_date);
@@ -634,6 +636,7 @@ function _batch_another_initialize_booking_system_batch($startdate, $enddate, &$
       $loop_date_closing_hour = $weekday . "_closing_hour";
 
       //Loop through hours
+      //TODO Fix so that exception hours work
       for ($h = $$loop_date_opening_hour; $h < $$loop_date_closing_hour; $h++) {//loops through every hour and creates a booking unit
         if ($$loop_date_opening_hour == "0" || $$loop_date_closing_hour == 0) {
           continue;
