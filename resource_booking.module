@@ -150,7 +150,7 @@ function resource_booking_permission() {
 function resource_booking_entity_property_info_alter(&$info) {
   $properties = &$info['booking']['properties'];
   $properties['title'] = array('label' => t('Title'), 'type' => 'text', 'description' => t('The title of the booking.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'title', );
-  
+
   $properties['date'] = array('label' => t('Date of booking'), 'type' => 'text', 'description' => t('The date of the booking.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'date', );
   $properties['booked'] = array('label' => t('Booked?'), 'type' => 'integer', 'description' => t('Is the unit booked? 1 = yes 0 =no.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'booked', );
   $properties['bookable'] = array('label' => t('Bookable?'), 'type' => 'integer', 'description' => t('Is the unit bookable? 1 = yes 0 =no.'), 'setter callback' => 'entity_property_verbatim_set', 'setter permission' => 'administer booking types', 'schema field' => 'bookable', );
@@ -498,7 +498,9 @@ function create_hours_submit_function($form, &$form_state) {
  ****************************** Batch API ****************************
  ******************************************************************************/
 function batch_initialize_booking_system($startdate, $enddate) {
- 
+  //declare counter
+  $context['sandbox']['counter'] = NULL;
+
   // batch metadata
   $batch = array('title' => t('Creating Bookable Units'), // Title to display while running.
   'operations' => array(), // Operations to complete, in order. Defined below.
@@ -510,11 +512,10 @@ function batch_initialize_booking_system($startdate, $enddate) {
   // to also be added following the $context parameters for the operation
   // functions below.
   $batch['operations'][] = array('_batch_initialize_booking_system_batch', array($startdate, $enddate));
-  $batch['operations'][] = array('_batch_another_initialize_booking_system_batch', array($startdate, $enddate));
 
   // Tip the first domino.
   batch_set($batch);
-    
+
   batch_process('admin/config/administration/resource_booking');
 }
 
@@ -522,146 +523,17 @@ function batch_initialize_booking_system($startdate, $enddate) {
  * Our first operation, creates bookable units for all resources for either 12 hours or 24 hours depending on their choice in the module config screen.
  */
 function _batch_initialize_booking_system_batch($start_date, $end_date) {
-  
-  //Convert start dates and end dates to timestamps
-  $start_date_timestamp = strtotime($start_date);
-  $end_date_timestamp = strtotime($end_date);
-
-  //Find the resources that correspond to the resource types
-  $query = new EntityFieldQuery();
-  $query -> entityCondition('entity_type', 'resource') -> addMetaData('account', user_load(1));
-  // Run the query as user 1.
-  $result = $query -> execute();
-  if (isset($result['resource'])) {
-    $room_ids = array_keys($result['resource']);
-  } else {
-    $room_ids = "";
+  for ($i = 1; $i <= 10; $i++) {
+    dsm($i);
+    $context['sandbox']['counter']++;
   }
-
-  //If no resources return error message
-  if (!$room_ids) {
-    drupal_set_message(t("Resources must be defined before booking units can be made"), 'error');
-    exit ;
-  }
-
-  $first_hour = 1;
-  $last_hour = 24;
-
-  for ($i = $start_date_timestamp; $i <= $end_date_timestamp; $i += 86400) {
-    $loop_date = date("Ymd", $i);
-    //A string version of the date for use in the loop starts with the beginning date and goes forward 1 day at a time
-    //Check to see if booking units already exist for this date if so abort booking creation process
-    $query = new EntityFieldQuery();
-    $query -> entityCondition('entity_type', 'booking') -> propertyCondition("date", $loop_date) -> addMetaData('account', user_load(1));
-    // Run the query as user 1.
-    $result = $query -> execute();
-    if (isset($result['booking'])) {
-      drupal_set_message(t('There are already booking units created for %date', array('%date' => $loop_date)), 'error');
-      $context['finished'] = 1;
-      return;
-    }
-
-    //If no booking units already exist
-    for ($h = $first_hour; $h <= $last_hour; $h++) {//loops through every hour and creates a booking unit
-      foreach ($room_ids as $room_id) {//Loops through each room id
-        $e = entity_create('booking', array('type' => 'booking'));
-        $ew = entity_metadata_wrapper('booking', $e);
-        $ew -> title -> set($loop_date . "_" . $h . "_" . $room_id);
-        //Not sure what the title should be yet
-        $ew -> resource -> set("$room_id");
-        $ew -> date -> set($loop_date);
-        $ew -> starthour -> set($h);
-        $ew -> save();
-      } //End loop room
-    } //End loop hour
-  }//End date loop
-  drupal_set_message(t("Booking units for all resource types were created for the date range %start_date to %end_date", array('%start_date' => $start_date, '%end_date' => $end_date)));
-}
-
-/**
- * Our second operation, this goes in and changes the field bookable to yes for the relevant opening hours.
- */
-function _batch_another_initialize_booking_system_batch($startdate, $enddate, &$context) {
-  //Convert start dates and end dates to timestamps
-  $start_date_timestamp = strtotime($startdate);
-  $end_date_timestamp = strtotime($enddate);
-  //Create an array with resource types
-  $type_array = array_keys(resource_type_get_types());
-
-  //Loop through each resource type to create booking units for that type
-  foreach ($type_array as $type) {
-
-    //Find the resources that correspond to the resource types
-    $query = new EntityFieldQuery();
-    $query -> entityCondition('entity_type', 'resource') -> entityCondition("bundle", $type) -> addMetaData('account', user_load(1));
-    // Run the query as user 1.
-    $result = $query -> execute();
-    if (isset($result['resource'])) {
-      $room_ids = array_keys($result['resource']);
-    } else {
-      $room_ids = "";
-    }
-
-    //If no resources forward to next resource type
-    if (!$room_ids) {
-      continue;
-    }
-
-    //Determine opening and closing hours for this type
-    $query = new EntityFieldQuery();
-    $query -> entityCondition('entity_type', 'hour') -> entityCondition("bundle", $type);
-    $result = $query -> execute();
-
-    $hour_ids = array_keys($result['hour']);
-    $hours = entity_load("hour", $hour_ids);
-    foreach ($hours as $hour) {
-      $day_opening_hour = $hour -> title . "_opening_hour";
-      $$day_opening_hour = $hour -> opening_hour;
-      //Create variables for each day t ex $Monday_opening_hour
-      $day_closing_hour = $hour -> title . "_closing_hour";
-      $$day_closing_hour = $hour -> closing_hour;
-    }
-
-    /*
-     * Run a loop which goes through the days and creates
-     * Booking units for each of the resources
-     */
-
-    //Loop through dates
-    for ($i = $start_date_timestamp; $i <= $end_date_timestamp; $i += 86400) {//Loops through each date in the date range
-      $loop_date = date("Ymd", $i);
-      //A string version of the date for use in the loop starts with the beginning date and goes forward 1 day at a time
-      $weekday = date("l", $i);
-      $loop_date_opening_hour = $weekday . "_opening_hour";
-      $loop_date_closing_hour = $weekday . "_closing_hour";
-
-      //Loop through hours
-      //TODO Fix so that exception hours work
-      for ($h = $$loop_date_opening_hour; $h < $$loop_date_closing_hour; $h++) {//loops through every hour and creates a booking unit
-        if ($$loop_date_opening_hour == "0" || $$loop_date_closing_hour == 0) {
-          continue;
-        }
-        //Check to see if booking units already exist for this date if so abort booking creation process
-        $query = new EntityFieldQuery();
-        $query -> entityCondition('entity_type', 'booking') -> propertyCondition("date", $loop_date) -> propertyCondition("starthour", $h) -> addMetaData('account', user_load(1));
-        // Run the query as user 1.
-        $result = $query -> execute();
-        if (isset($result['booking'])) {
-          $room_ids = array_keys($result['booking']);
-          foreach ($room_ids as $room_id) {//Loops through each room id
-
-            $ew = entity_metadata_wrapper('booking', $room_id);
-            $ew -> bookable -> set(1);
-            $ew -> save();
-
-          }//End room loop
-        }//End if
-      } //End loop hour
-    }//End loop date
-    drupal_set_message(t("resource type %type are now bookable for the opening hours you defined", array('%type' => $type)));
-  }//End loop resource
-
-  $context['finished'] = 1;
+ if ($context['sandbox']['counter'] > 20) {  
+    $context['finished'] =1;  
+    dsm("all done");
+ } else {
+    $context['finished'] =0;   
+    dsm("not done yet, should loop");
+ }  
 }
 
 /**
@@ -678,25 +550,23 @@ function _batch_initialize_booking_system_finished($success, $results, $operatio
   drupal_set_message($message);
 }
 
-
 /*******************************************************************************
  ****************************** Cron hook****************************
  ******************************************************************************/
 
-function resource_booking_cron(){
-  
-if (!variable_get('resource_booking_cron_last_run'))  {
+function resource_booking_cron() {
+
+  if (!variable_get('resource_booking_cron_last_run')) {
     drupal_set_message("not set");
     variable_set('resource_booking_cron_last_run', time());
-} else {
-  
-  drupal_set_message(variable_get('resource_booking_cron_last_run'));
-}
-  
-//$last_run = variable_get('mymodule_cron_last_run', REQUEST_TIME);
+  } else {
+
+    drupal_set_message(variable_get('resource_booking_cron_last_run'));
+  }
+
+  //$last_run = variable_get('mymodule_cron_last_run', REQUEST_TIME);
 
   //$one_week = strtotime('+7 days', $last_run);
   //if {$one_week > time()}
-  
-  
+
 }
